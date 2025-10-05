@@ -1,0 +1,108 @@
+{
+	"$type": "RegularSkinnedMeshResource",
+	"ObjectUUID": {
+		"$type": "GGUUID",
+		"Data0": -91,
+		"Data1": -45,
+		"Data2": 116,
+		"Data3": -58,
+		"Data4": 33,
+		"Data5": 66,
+		"Data6": 63,
+		"Data7": -84,
+		"Data8": -84,
+		"Data9": -50,
+		"Data10": -101,
+		"Data11": 100,
+		"Data12": -84,
+		"Data13": 115,
+		"Data14": -109,
+		"Data15": 110
+	},
+	"StaticDataBlockSize": 0,
+	"BoundingBox": {
+		"$type": "BoundingBox3",
+		"Min": {
+			"$type": "Vec3",
+			"X": 3.4028235E38,
+			"Y": 3.4028235E38,
+			"Z": 3.4028235E38
+		},
+		"Max": {
+			"$type": "Vec3",
+			"X": -3.4028235E38,
+			"Y": -3.4028235E38,
+			"Z": -3.4028235E38
+		}
+	},
+	"CullInfo": {
+		"$type": "DrawableCullInfo",
+		"Flags": 1056
+	},
+	"MeshHierarchyInfo": {
+		"$type": "MeshHierarchyInfo",
+		"MITNodeSize": 144,
+		"PrimitiveCount": 2,
+		"MeshCount": 1,
+		"StaticMeshCount": 0,
+		"LodMeshCount": 0,
+		"PackedData": -32768
+	},
+	"Skeleton": "<external link to ds/models/characters/sam_sam/core/sam_body_black/model/skeletons/mesh_skeleton_jnt_c_b_000_root:8601fa8f-ed4d-fa53-8074-20e4611c56cc>",
+	"OrientationHelpers": "<null reference>",
+	"DrawFlags": {
+		"$type": "DrawFlags",
+		"Data": 34537493
+	},
+	"DeformerType": "DeformPosAndNormals",
+	"SkinnedMeshJointBindings": "<internal link to b47c2ebf-fad1-363b-95a5-82fad29db7b8>",
+	"SkinnedMeshBoneBoundingBoxes": "<internal link to ed96f9b8-25e8-b836-be83-a3cdc5a8ec12>",
+	"PositionBoundsScale": {
+		"$type": "Vec3",
+		"X": 1.0,
+		"Y": 1.0,
+		"Z": 1.0
+	},
+	"PositionBoundsOffset": {
+		"$type": "Vec3",
+		"X": 0.0,
+		"Y": 0.0,
+		"Z": 0.0
+	},
+	"SkinInfo": "<internal link to 92262fd3-cfaa-9a32-b787-5fd5b958dfac>",
+	"Primitives": [
+		"<internal link to 9b715ef6-7a73-0834-b173-8bc69e88c7d8>",
+		"<internal link to 22424a18-0a95-c23a-81f0-42cab94869ed>"
+	],
+	"ShadingGroups": [
+		"<internal link to bbfed98d-0ba8-0f35-ae7f-b0b4f946ca1e>",
+		"<internal link to e6fa26f9-a095-b331-830f-e3ffa5b98fe7>"
+	],
+	"RenderEffectSwapper": "<null reference>",
+	"DataSource": {
+		"$type": "DSDataSource",
+		"Location": "ds/models/characters/sam_sam/core/sam_body_black/model/parts/msh_bdnkd_lx_7cae4fd5_001",
+		"UUID": {
+			"$type": "GGUUID",
+			"Data0": -91,
+			"Data1": -45,
+			"Data2": 116,
+			"Data3": -58,
+			"Data4": 33,
+			"Data5": 66,
+			"Data6": 63,
+			"Data7": -84,
+			"Data8": -84,
+			"Data9": -50,
+			"Data10": -101,
+			"Data11": 100,
+			"Data12": -84,
+			"Data13": 115,
+			"Data14": -109,
+			"Data15": 110
+		},
+		"Channel": 1,
+		"Offset": 0,
+		"Length": 854272
+	}
+}
