@@ -1,4 +1,4 @@
-# HZDMeshTool
+# HDSMeshTool
 
 Blender add-on for exploring and modifying meshes built on Guerrilla Games' Decima engine. The tool began as an importer/exporter for **Horizon Zero Dawn** and now bundles experimental research toward **Death Stranding** support, including data-mining utilities and format notes.
 
