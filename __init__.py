@@ -26,6 +26,7 @@ import math
 import operator
 
 from .decima.ds_vertex_streams import VertexStreamSet as DSVertexStreamSet
+from .decima.ds_export import export_death_stranding_mesh, DeathStrandingExportError
 
 from sys import platform
 import ctypes
@@ -2171,6 +2172,12 @@ def ExportMesh(isLodMesh, resIndex, meshIndex, primIndex):
     stream = core + ".stream"
 
     vb: VertexArrayResource = prim.vertexBlock
+    if getattr(vb, "variant_name", None) == "DS":
+        try:
+            export_death_stranding_mesh(mesh, prim, primIndex, meshName)
+        except DeathStrandingExportError as exc:
+            print("Death Stranding export is not implemented: %s" % exc)
+        return
     vs: StreamData = vb.vertexStream
     ns: StreamData = vb.normalsStream
     us: StreamData = vb.uvStream
