@@ -7,7 +7,7 @@ Blender add-on for exploring and modifying meshes built on Guerrilla Games' Deci
 | Area | Status | Notes |
 | --- | --- | --- |
 | Horizon Zero Dawn skeletal meshes | ✅ Stable | Import/export of `.core`/`.stream` pairs through the Blender add-on. Original workflows remain intact. |
-| Death Stranding mesh import | ⚠️ In progress | `VertexStreamSet` descriptors, chunk links, and stream headers are parsed, but vertex buffers are not yet expanded into Blender meshes. |
+| Death Stranding mesh import | ⚠️ In progress | Structured `VertexStreamSet` metadata and chunk-table references are captured; per-primitive buffer slicing is still pending, so Blender meshes are not created yet. |
 | Death Stranding mesh export | ❌ Blocked | Export raises a `DeathStrandingExportError` while chunked vertex/index repacking remains unimplemented. |
 | Tooling | ✅ Stable | `tools/analyze_ds_core.py` dumps block/stream metadata to aid reverse-engineering. |
 
@@ -43,7 +43,7 @@ Texture extraction, material creation, and node-group helpers continue to functi
 
 Death Stranding stores vertex data as mesh-wide stream sets with shared chunk tables. The add-on now recognises these resources, captures per-stream headers, and preserves chunk metadata during parsing, but Blender import/export is still incomplete:
 
-- Import currently stops after recording the `VertexStreamSet` descriptors and chunk table references. Vertex buffers are not yet sliced per primitive, so meshes will not appear in Blender.
+- Import now records `VertexStreamSet` descriptors alongside the resolved chunk-table links and stream headers. The remaining task is to slice the mesh-wide vertex buffers per primitive before geometry can appear inside Blender.
 - Export short-circuits with a `DeathStrandingExportError` because chunked stream repacking has not been written. This prevents Horizon-era code paths from corrupting Death Stranding assets.
 - The `tools/analyze_ds_core.py` utility can be used to inspect `.core` files, study block relationships, and collect GUIDs for future implementation work:
   ```bash
@@ -54,7 +54,7 @@ Refer to `docs/death_stranding_analysis.md` for the observed stream layout, bloc
 
 ## Remaining work
 
-- [ ] Slice Death Stranding `VertexStreamSet` buffers into `StreamData` objects so meshes can be instantiated in Blender.
+- [ ] Slice Death Stranding `VertexStreamSet` buffers into `StreamData` objects so meshes can be instantiated in Blender (metadata capture is in place; implement chunk slicing and buffer views).
 - [ ] Rebuild Death Stranding chunk tables during export, packing vertex and index data per mesh before writing `.stream` files and clearing the `DeathStrandingExportError` guard.
 - [ ] Audit index buffer handling to confirm whether Death Stranding also shares chunked indices across primitives or requires additional metadata.
 - [ ] Extend automated tests/dev workflows to cover Death Stranding parsing once geometry import succeeds.
