@@ -1,68 +1,66 @@
 # HZDMeshTool
-Import/Export meshes from Horizon Zero Dawn's .core format
 
-## Download
-https://github.com/AlexP0/HZDMeshTool/releases
+Blender add-on for exploring and modifying meshes built on Guerrilla Games' Decima engine. The tool began as an importer/exporter for **Horizon Zero Dawn** and now bundles experimental research toward **Death Stranding** support, including data-mining utilities and format notes. The Death Stranding path is currently focused on decoding the per-mesh vertex stream layout and guarding the exporter until shared-buffer rebuilding is implemented.
 
-## Installation
-- In Blender open the User Preferences
-- Go in the Add-ons tab and click Install...
-- Select the HZDMeshTool.zip file
-- Enable the addon
+## Feature status
 
-## Usage
-### 1 - Go to Scene Properties tab
+| Area | Status | Notes |
+| --- | --- | --- |
+| Horizon Zero Dawn skeletal meshes | ✅ Stable | Import/export of `.core`/`.stream` pairs through the Blender add-on. Original workflows remain intact. |
+| Death Stranding mesh import | ⚠️ In progress | Structured `VertexStreamSet` metadata and chunk-table references are captured; per-primitive buffer slicing is still pending, so Blender meshes are not created yet. |
+| Death Stranding mesh export | ❌ Blocked | Export raises a `DeathStrandingExportError` while chunked vertex/index repacking remains unimplemented. |
+| Tooling | ✅ Stable | `tools/analyze_ds_core.py` dumps block/stream metadata to aid reverse-engineering. |
 
-### 2 - As of 1.3 you have two ways of importing meshes
-### **2A** - **Extract the files directly from the game.**
-- - **A-1 Set the Workspace Path**
->This is the path where assets will be extracted from the game (in a file tree)
-- - **A-2 Set the Game Path** 
->This is the path to the **folder** where HorizonZeroDawn.exe is located
-- - **A-3 Set the Asset Path** 
->This is the archive path to a skeletal mesh (e.g.,models/characters/humans/aloy/animation/parts/aloy_ct_a_lx.core)
-- - **A-4 Click Extract** 
->This will extract the mesh .core and .stream along with the appropriate skeleton .core **directly** from the game files. 
-It will also auto-input the paths in the Mesh Core and Skeleton Core fields and will auto-click Search Data so you're ready for import. 
-(In general the tool will never extract over existing files, delete the files manually if you want to extract them again)
+## Repository layout
 
-### **2B** - **Use already extract files (from ProjectDecima or other extraction tool)**
-- - **Input a file in Mesh Core and Skeleton Core.**
->Must be .core files, the associated .stream must be in the same directory and have the same name. 
-    The skeleton must be the one referenced in by the mesh.
+- `__init__.py` – Blender add-on entry point containing the Horizon toolchain plus Death Stranding guards, stream parsing hooks, and exporter fallbacks.
+- `decima/` – Supporting modules, including Death Stranding helpers (`ds_vertex_streams.py`, `ds_export.py`) and shared typing utilities.
+- `docs/death_stranding_analysis.md` – Notes captured while comparing Death Stranding assets to the legacy Horizon format.
+- `tools/analyze_ds_core.py` – Standalone CLI for inspecting `.core` meshes and enumerating vertex/index references.
+- `DSfiles/` – Sample Death Stranding assets used for analysis and testing.
 
-- - **Click Search Data**
->The tool will search for and display a list of mesh parts found in the .core file.
-    Meshes are part of either a LOD Object (contains 1 LOD with multiple elements) or a LOD Group (contains multiple LODs)
-    Lowest level LODs aren't handled yet because they are stored directly in the .core
-    Mesh parts with a warning sign are not safe to export yet.
+## Installation (Blender add-on)
 
-### 3 - Click Import icon next to one of the mesh parts in the LOD Objects or LOD Groups sub-panels
->A mesh will be created and placed in organized collection. The tool will search for existing skeleton based on the armature data number, it will import one from the skeleton .core if not found. You can also click the button named "Import" to import the entire LOD. Take note that some mesh have multiple UVs or Vertex Color channels.
+1. Download the repository or grab a packaged `.zip` from your preferred distribution method.
+2. In Blender, open **Edit → Preferences… → Add-ons** and choose **Install…**
+3. Select the `HZDMeshTool.zip` archive (or the cloned repository folder) and enable **HZD Mesh Tool**.
+4. A new **HZD Mesh Tool** panel appears under **Scene Properties**.
 
-#### 3A - Texture Extract and Material Creation
->If you setup Game Path and Workspace Path in set 2A, you can enable the Extract Texture checkbox. If enabled, the tool will extract every textures used by the imported mesh part to the Workspace directory. You can click the checkered icon on next to the mesh import button to see the textures used.
->
->Extracting textures will also cause the tool to create a material (if it doesn't already exist) and place the textures in it.
->Texture Sets will be built into Node Groups with outputs coresponding to the in-game usage of the texture or it's RGBA channels.
->No connection will be made to the shader node, I have no way of knowing which texture goes where yet.
-    
+## Working with Horizon Zero Dawn assets
 
-### 4 - Do your edits  
->You can edit the mesh however you want, but:
-    -You must keep the Vertex Group order intact
-    -You must have the same amount of UVs/vColor channels as was imported
-    -Modifications to the skeleton are not considered
-    
-### 5 - Click Export Button (to export an entire lod) or the export icon for a singular mesh part.
-    
->The original files will be overwritten with the new data.
-    The tool will export the Object that has the same name as the mesh part (e.i.: "0_Eyelashes")
-    The number after the name is the vertex count of the original mesh, it is not relevant to export. 
-    (only to give an idea of the size of the mesh data on import)
-    Again: Mesh parts with a warning sign are not safe to export yet.
-    
-### 6 - Modifying LOD Distances.
+The legacy workflow remains unchanged:
 
->You may also modify the distances (in meters) at which the lod will appear in game.
-    Click Save LOD Distances button to save them on the file.
+1. Go to **Scene Properties → HZD Mesh Tool**.
+2. Either extract directly from your game install (set *Workspace Path*, *Game Path*, *Asset Path* and click **Extract**) or point the tool at already-extracted `.core` files.
+3. Click **Search Data** to list the LOD objects and mesh parts found inside the mesh `.core` file.
+4. Use the import icons to bring individual mesh parts (or the **Import** button for a full LOD) into Blender. Skeletons are auto-imported on demand.
+5. Edit the mesh while preserving vertex group order, UV/VColor channel counts, and skeleton structure.
+6. Use the export icons (or **Export** button) to overwrite the corresponding `.core`/`.stream` pair. LOD distances can also be edited and saved from the panel.
+
+Texture extraction, material creation, and node-group helpers continue to function when the **Extract Textures** option is enabled and the workspace is configured.
+
+## Experimental Death Stranding support
+
+Death Stranding stores vertex data as mesh-wide stream sets with shared chunk tables. The add-on now recognises these resources, captures per-stream headers, and preserves chunk metadata during parsing, but Blender import/export is still incomplete:
+
+- Import now records `VertexStreamSet` descriptors alongside the resolved chunk-table links and stream headers. The remaining task is to slice the mesh-wide vertex buffers per primitive before geometry can appear inside Blender.
+- Export short-circuits with a `DeathStrandingExportError` because chunked stream repacking has not been written. This prevents Horizon-era code paths from corrupting Death Stranding assets.
+- The `tools/analyze_ds_core.py` utility can be used to inspect `.core` files, study block relationships, and collect GUIDs for future implementation work:
+  ```bash
+  python tools/analyze_ds_core.py DSfiles/mesh_test.core --limit 40
+  ```
+
+Refer to `docs/death_stranding_analysis.md` for the observed stream layout, block identifiers, and differences from Horizon Zero Dawn.
+
+## Remaining work
+
+- [ ] Slice Death Stranding `VertexStreamSet` buffers into `StreamData` objects so meshes can be instantiated in Blender (metadata capture is in place; implement chunk slicing and buffer views).
+- [ ] Rebuild Death Stranding chunk tables during export, packing vertex and index data per mesh before writing `.stream` files and clearing the `DeathStrandingExportError` guard.
+- [ ] Audit index buffer handling to confirm whether Death Stranding also shares chunked indices across primitives or requires additional metadata.
+- [ ] Extend automated tests/dev workflows to cover Death Stranding parsing once geometry import succeeds.
+- [ ] Document any additional Decima titles or format variations encountered during development.
+
+## Contributing
+
+Pull requests and research findings are welcome. Please include reproduction steps or command examples when reporting Death Stranding issues so the community can iterate on the format support.
+
