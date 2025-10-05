@@ -3035,7 +3035,8 @@ class VertexArrayResource(DataBlock):
             self.vertexStream = None
             self.normalsStream = None
             self.uvStream = None
-            self.ds_vertex_set = DSVertexStreamSet.parse(r, f)
+            block_end = self.blockStartOffset + self.size
+            self.ds_vertex_set = DSVertexStreamSet.parse(r, f, block_end=block_end)
             self.vertexCount = self.ds_vertex_set.vertex_count
             self.streamDescriptors = self.ds_vertex_set.streams
             self.EndBlock(f)
@@ -3061,6 +3062,12 @@ class VertexArrayResource(DataBlock):
         s += "\n'''Vertex Count = %d  |  inStream = %s"%(self.vertexCount,str(self.inStream))
         if hasattr(self, "ds_vertex_set"):
             s += "\n----DS Stream Set with %d descriptors" % len(self.streamDescriptors)
+            for index, descriptor in enumerate(self.streamDescriptors):
+                s += "\n------Stream %d header: %s" % (index, descriptor.header)
+                s += "\n------Stream %d chunk GUID: %s" % (index, descriptor.chunk_guid)
+                if descriptor.tail:
+                    s += "\n------Stream %d tail: %s" % (index, descriptor.tail)
+
             return s
         s += "\n----VertexStream " + self.vertexStream.__str__()
         if self.normalsStream:
