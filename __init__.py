@@ -25,6 +25,8 @@ import mathutils
 import math
 import operator
 
+from .decima.ds_vertex_streams import VertexStreamSet as DSVertexStreamSet
+
 from sys import platform
 import ctypes
 from ctypes import c_size_t, c_char_p, c_int32
@@ -3020,6 +3022,18 @@ class VertexArrayResource(DataBlock):
         super().__init__(f,BlockIDs["VertexArrayResource"],expectedGuid)
         r = ByteReader
         self.posVCount = f.tell()
+        if self.variant_name == "DS":
+            self.streamRefCount = 0
+            self.inStream = True
+            self.vertexStream = None
+            self.normalsStream = None
+            self.uvStream = None
+            self.ds_vertex_set = DSVertexStreamSet.parse(r, f)
+            self.vertexCount = self.ds_vertex_set.vertex_count
+            self.streamDescriptors = self.ds_vertex_set.streams
+            self.EndBlock(f)
+            return
+
         self.vertexCount = r.uint32(f)
         self.streamRefCount = r.uint32(f)
         self.inStream = r.bool(f)
@@ -3038,6 +3052,9 @@ class VertexArrayResource(DataBlock):
     def __str__(self):
         s = "\n--VertexArrayResource"
         s += "\n'''Vertex Count = %d  |  inStream = %s"%(self.vertexCount,str(self.inStream))
+        if hasattr(self, "ds_vertex_set"):
+            s += "\n----DS Stream Set with %d descriptors" % len(self.streamDescriptors)
+            return s
         s += "\n----VertexStream " + self.vertexStream.__str__()
         if self.normalsStream:
             s += "\n----NormalsStream " + self.normalsStream.__str__()
