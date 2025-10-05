@@ -2422,22 +2422,62 @@ class Asset:
         self.skeletonPath = "" #path to skeleton asset (start with models/ end with .core).
 
 
-BlockIDs = {"RegularSkinnedMeshResource" : 10982056603708398958,
-        "VertexArrayResource" : 13522917709279820436,
-        "SkinnedMeshBoneBindings" : 232082505300933932,
-        "SkinnedMeshBoneBoundingBoxes" : 1425406424293942754,
-        "RegularSkinnedMeshResourceSkinInfo" : 4980347625154103665,
-        "RenderingPrimitiveResource" : 17523037150162385132,
-        "IndexArrayResource" : 12198706699739407665,
-        "RenderEffectResource" : 12029122079492233037,
-        "LodMeshResource" : 6871768592993170868,
-        "ShaderResource" : 5215210673454096253, #was 5215210673454096253 5561636305660569489
-        "TextureResource" : 17501462827539052646,
-        "MultiMeshResource" : 7022335006738406101,
-        "DataBufferResource" : 10234768860597628846,
-        "StaticMeshResource" : 17037430323200133752,
-        "SKDTreeResource" : 13505794420212475061,
-        "SkeletonHelpers" : 6306064744810253771
+class BlockIDSet:
+    def __init__(self, name, variants=None, **extra_variants):
+        self.name = name
+        self._variants = {}
+        if variants is not None:
+            if isinstance(variants, dict):
+                self._variants.update(variants)
+            else:
+                raise TypeError("variants must be provided as a mapping of variant name to ID")
+        if extra_variants:
+            self._variants.update(extra_variants)
+        if not self._variants:
+            raise ValueError(f"BlockIDSet '{name}' must define at least one variant")
+
+    def __contains__(self, value):
+        return value in self._variants.values()
+
+    def __iter__(self):
+        return iter(self._variants.values())
+
+    def __getitem__(self, variant_name):
+        return self._variants[variant_name]
+
+    def items(self):
+        return self._variants.items()
+
+    def variants(self):
+        return dict(self._variants)
+
+    def as_set(self):
+        return set(self._variants.values())
+
+    def variant_for(self, block_id):
+        for variant_name, variant_id in self._variants.items():
+            if variant_id == block_id:
+                return variant_name
+        return None
+
+
+BlockIDs = {
+        "RegularSkinnedMeshResource" : BlockIDSet("RegularSkinnedMeshResource", HZD=10982056603708398958),
+        "VertexArrayResource" : BlockIDSet("VertexArrayResource", HZD=13522917709279820436, DS=0x3AC29A123FAABAB4),
+        "SkinnedMeshBoneBindings" : BlockIDSet("SkinnedMeshBoneBindings", HZD=232082505300933932),
+        "SkinnedMeshBoneBoundingBoxes" : BlockIDSet("SkinnedMeshBoneBoundingBoxes", HZD=1425406424293942754),
+        "RegularSkinnedMeshResourceSkinInfo" : BlockIDSet("RegularSkinnedMeshResourceSkinInfo", HZD=4980347625154103665),
+        "RenderingPrimitiveResource" : BlockIDSet("RenderingPrimitiveResource", HZD=17523037150162385132, DS=0xEE49D93DA4C1F4B8),
+        "IndexArrayResource" : BlockIDSet("IndexArrayResource", HZD=12198706699739407665),
+        "RenderEffectResource" : BlockIDSet("RenderEffectResource", HZD=12029122079492233037),
+        "LodMeshResource" : BlockIDSet("LodMeshResource", HZD=6871768592993170868),
+        "ShaderResource" : BlockIDSet("ShaderResource", HZD=5215210673454096253), #was 5215210673454096253 5561636305660569489
+        "TextureResource" : BlockIDSet("TextureResource", HZD=17501462827539052646),
+        "MultiMeshResource" : BlockIDSet("MultiMeshResource", HZD=7022335006738406101),
+        "DataBufferResource" : BlockIDSet("DataBufferResource", HZD=10234768860597628846, DS=0x0B0D03C7E087F38E),
+        "StaticMeshResource" : BlockIDSet("StaticMeshResource", HZD=17037430323200133752),
+        "SKDTreeResource" : BlockIDSet("SKDTreeResource", HZD=13505794420212475061),
+        "SkeletonHelpers" : BlockIDSet("SkeletonHelpers", HZD=6306064744810253771)
             }
 asset = Asset()
 
@@ -2446,10 +2486,39 @@ class DataBlock:
         r = ByteReader
 
         self.expectedID = expectedID
+        self.expected_ids = None
+        self.variant_name = None
+        self.block_type = None
+        variant_lookup = None
+        if isinstance(expectedID, BlockIDSet):
+            variant_lookup = expectedID
+            self.block_type = expectedID.name
+            self.expected_ids = expectedID.as_set()
+        elif expectedID not in (0, None):
+            if isinstance(expectedID, dict):
+                variant_lookup = expectedID
+                self.expected_ids = set(expectedID.values())
+            elif isinstance(expectedID, (set, tuple, list)):
+                self.expected_ids = set(expectedID)
+            else:
+                self.expected_ids = {expectedID}
         self.ID = r.uint64(f)
-        if expectedID != 0:
-            if self.ID != self.expectedID:
-                raise Exception("%s -- offset %d  --  Invalid Block ID: got %d expected %d"%(self.__class__.__name__,f.tell()-8,self.ID ,self.expectedID))
+        if self.expected_ids:
+            if self.ID not in self.expected_ids:
+                expected_desc = ", ".join(f"0x{id_value:016X}" for id_value in sorted(self.expected_ids))
+                raise Exception("%s -- offset %d  --  Invalid Block ID: got 0x%016X expected one of %s" % (
+                    self.__class__.__name__,
+                    f.tell()-8,
+                    self.ID,
+                    expected_desc))
+            if variant_lookup:
+                if isinstance(variant_lookup, BlockIDSet):
+                    self.variant_name = variant_lookup.variant_for(self.ID)
+                else:
+                    for name, variant_id in variant_lookup.items():
+                        if variant_id == self.ID:
+                            self.variant_name = name
+                            break
         self.size = r.int32(f)
         self.blockStartOffset = f.tell()
         self.guid = r.guid(f)
@@ -3352,13 +3421,13 @@ def ReadCoreFile():
             ID = r.uint64(f)
             f.seek(-8,1)
             # print(ID)
-            if ID == BlockIDs["LodMeshResource"]: # LodMeshResource
+            if ID in BlockIDs["LodMeshResource"]: # LodMeshResource
                 asset.LodMeshResources.append(LodMeshResource(f))
-            elif ID == BlockIDs["MultiMeshResource"]: # MultiMeshResource
+            elif ID in BlockIDs["MultiMeshResource"]: # MultiMeshResource
                 asset.MultiMeshResources.append(MultiMeshResource(f))
-            elif ID == BlockIDs["RegularSkinnedMeshResource"]: # RegularSkinnedMeshResource
+            elif ID in BlockIDs["RegularSkinnedMeshResource"]: # RegularSkinnedMeshResource
                 asset.RegularSkinnedMeshResources.append(RegularSkinnedMeshResource(f))
-            elif ID == BlockIDs["StaticMeshResource"]: # StaticMeshResource
+            elif ID in BlockIDs["StaticMeshResource"]: # StaticMeshResource
                 asset.StaticMeshResources.append(StaticMeshResource(f))
             else:
                 raise Exception("This file is not supported.",ID)
