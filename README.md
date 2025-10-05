@@ -1,19 +1,19 @@
-# HDSMeshTool
+# HZDMeshTool
 
-Blender add-on for exploring and modifying meshes built on Guerrilla Games' Decima engine. The tool began as an importer/exporter for **Horizon Zero Dawn** and now bundles experimental research toward **Death Stranding** support, including data-mining utilities and format notes.
+Blender add-on for exploring and modifying meshes built on Guerrilla Games' Decima engine. The tool began as an importer/exporter for **Horizon Zero Dawn** and now bundles experimental research toward **Death Stranding** support, including data-mining utilities and format notes. The Death Stranding path is currently focused on decoding the per-mesh vertex stream layout and guarding the exporter until shared-buffer rebuilding is implemented.
 
 ## Feature status
 
 | Area | Status | Notes |
 | --- | --- | --- |
 | Horizon Zero Dawn skeletal meshes | ✅ Stable | Import/export of `.core`/`.stream` pairs through the Blender add-on. Original workflows remain intact. |
-| Death Stranding mesh import | ⚠️ In progress | Vertex stream metadata is parsed, but chunked buffers are not yet expanded into Blender meshes. |
-| Death Stranding mesh export | ❌ Blocked | Export raises a `DeathStrandingExportError` until shared stream repacking is implemented. |
+| Death Stranding mesh import | ⚠️ In progress | `VertexStreamSet` descriptors, chunk links, and stream headers are parsed, but vertex buffers are not yet expanded into Blender meshes. |
+| Death Stranding mesh export | ❌ Blocked | Export raises a `DeathStrandingExportError` while chunked vertex/index repacking remains unimplemented. |
 | Tooling | ✅ Stable | `tools/analyze_ds_core.py` dumps block/stream metadata to aid reverse-engineering. |
 
 ## Repository layout
 
-- `__init__.py` – Blender add-on entry point containing the Horizon toolchain plus Death Stranding guards and stream parsing hooks.
+- `__init__.py` – Blender add-on entry point containing the Horizon toolchain plus Death Stranding guards, stream parsing hooks, and exporter fallbacks.
 - `decima/` – Supporting modules, including Death Stranding helpers (`ds_vertex_streams.py`, `ds_export.py`) and shared typing utilities.
 - `docs/death_stranding_analysis.md` – Notes captured while comparing Death Stranding assets to the legacy Horizon format.
 - `tools/analyze_ds_core.py` – Standalone CLI for inspecting `.core` meshes and enumerating vertex/index references.
@@ -41,10 +41,10 @@ Texture extraction, material creation, and node-group helpers continue to functi
 
 ## Experimental Death Stranding support
 
-Death Stranding stores vertex data as mesh-wide stream sets with shared chunk tables. The add-on now recognises these resources and preserves their metadata during parsing, but Blender import/export is still incomplete:
+Death Stranding stores vertex data as mesh-wide stream sets with shared chunk tables. The add-on now recognises these resources, captures per-stream headers, and preserves chunk metadata during parsing, but Blender import/export is still incomplete:
 
-- Import currently stops after recording the `VertexStreamSet` descriptors. Vertex buffers are not yet sliced per primitive, so meshes will not appear in Blender.
-- Export short-circuits with a clear error because chunked stream repacking has not been written.
+- Import currently stops after recording the `VertexStreamSet` descriptors and chunk table references. Vertex buffers are not yet sliced per primitive, so meshes will not appear in Blender.
+- Export short-circuits with a `DeathStrandingExportError` because chunked stream repacking has not been written. This prevents Horizon-era code paths from corrupting Death Stranding assets.
 - The `tools/analyze_ds_core.py` utility can be used to inspect `.core` files, study block relationships, and collect GUIDs for future implementation work:
   ```bash
   python tools/analyze_ds_core.py DSfiles/mesh_test.core --limit 40
@@ -55,8 +55,8 @@ Refer to `docs/death_stranding_analysis.md` for the observed stream layout, bloc
 ## Remaining work
 
 - [ ] Slice Death Stranding `VertexStreamSet` buffers into `StreamData` objects so meshes can be instantiated in Blender.
-- [ ] Rebuild Death Stranding chunk tables during export, packing vertex and index data per mesh before writing `.stream` files.
-- [ ] Audit index buffer handling to confirm whether Death Stranding also shares chunked indices across primitives.
+- [ ] Rebuild Death Stranding chunk tables during export, packing vertex and index data per mesh before writing `.stream` files and clearing the `DeathStrandingExportError` guard.
+- [ ] Audit index buffer handling to confirm whether Death Stranding also shares chunked indices across primitives or requires additional metadata.
 - [ ] Extend automated tests/dev workflows to cover Death Stranding parsing once geometry import succeeds.
 - [ ] Document any additional Decima titles or format variations encountered during development.
 

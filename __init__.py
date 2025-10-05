@@ -3067,7 +3067,6 @@ class VertexArrayResource(DataBlock):
                 s += "\n------Stream %d chunk GUID: %s" % (index, descriptor.chunk_guid)
                 if descriptor.tail:
                     s += "\n------Stream %d tail: %s" % (index, descriptor.tail)
-
             return s
         s += "\n----VertexStream " + self.vertexStream.__str__()
         if self.normalsStream:
