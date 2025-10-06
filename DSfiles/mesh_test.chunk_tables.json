@@ -1,0 +1,80 @@
+{
+  "vertexSets": {
+    "71d9d23d-5e9f-b930-ab89-ef0525098768": {
+      "vertexCount": 4063,
+      "streams": {
+        "positions": {
+          "stride": 28,
+          "chunks": [
+            {
+              "primitiveGuid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+              "offset": 0,
+              "length": 113764,
+              "vertexCount": 4063
+            }
+          ]
+        },
+        "normals": {
+          "stride": 28,
+          "chunks": [
+            {
+              "primitiveGuid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+              "offset": 113920,
+              "length": 113764,
+              "vertexCount": 4063
+            }
+          ]
+        },
+        "color_uv": {
+          "stride": 8,
+          "chunks": [
+            {
+              "primitiveGuid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+              "offset": 227840,
+              "length": 32504,
+              "vertexCount": 4063
+            }
+          ]
+        }
+      }
+    },
+    "2c4982a5-e2cc-853b-9139-f09f0d1975de": {
+      "vertexCount": 7366,
+      "streams": {
+        "positions": {
+          "stride": 28,
+          "chunks": [
+            {
+              "primitiveGuid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+              "offset": 303360,
+              "length": 206248,
+              "vertexCount": 7366
+            }
+          ]
+        },
+        "normals": {
+          "stride": 28,
+          "chunks": [
+            {
+              "primitiveGuid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+              "offset": 509696,
+              "length": 206248,
+              "vertexCount": 7366
+            }
+          ]
+        },
+        "color_uv": {
+          "stride": 8,
+          "chunks": [
+            {
+              "primitiveGuid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+              "offset": 716032,
+              "length": 58928,
+              "vertexCount": 7366
+            }
+          ]
+        }
+      }
+    }
+  }
+}

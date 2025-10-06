@@ -1,0 +1,234 @@
+{
+  "2c4982a5-e2cc-853b-9139-f09f0d1975de": {
+    "index": {
+      "bufferViewId": 7,
+      "count": 39492,
+      "size": 2
+    },
+    "primitiveGuid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+    "streams": [
+      {
+        "attributes": [
+          {
+            "bufferViewId": 6,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE_NORMALIZED",
+            "offset": 0,
+            "semantic": "COLOR_0",
+            "size": 4,
+            "stride": 8
+          },
+          {
+            "bufferViewId": 6,
+            "elementCount": 2,
+            "elementType": "HALF_FLOAT",
+            "offset": 4,
+            "semantic": "TEXCOORD_0",
+            "size": 4,
+            "stride": 8
+          }
+        ],
+        "bufferViewId": 6,
+        "length": 58928,
+        "offset": 716032,
+        "stride": 8
+      },
+      {
+        "attributes": [
+          {
+            "bufferViewId": 4,
+            "elementCount": 3,
+            "elementType": "FLOAT",
+            "offset": 0,
+            "semantic": "POSITION",
+            "size": 12,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 4,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE_NORMALIZED",
+            "offset": 24,
+            "semantic": "WEIGHTS_1",
+            "size": 4,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 4,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE_NORMALIZED",
+            "offset": 20,
+            "semantic": "WEIGHTS_0",
+            "size": 4,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 4,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE",
+            "offset": 16,
+            "semantic": "JOINTS_1",
+            "size": 4,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 4,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE",
+            "offset": 12,
+            "semantic": "JOINTS_0",
+            "size": 4,
+            "stride": 28
+          }
+        ],
+        "bufferViewId": 4,
+        "length": 206248,
+        "offset": 303360,
+        "stride": 28
+      },
+      {
+        "attributes": [
+          {
+            "bufferViewId": 5,
+            "elementCount": 4,
+            "elementType": "FLOAT",
+            "offset": 12,
+            "semantic": "TANGENT",
+            "size": 16,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 5,
+            "elementCount": 3,
+            "elementType": "FLOAT",
+            "offset": 0,
+            "semantic": "NORMAL",
+            "size": 12,
+            "stride": 28
+          }
+        ],
+        "bufferViewId": 5,
+        "length": 206248,
+        "offset": 509696,
+        "stride": 28
+      }
+    ],
+    "vertexCount": 7366
+  },
+  "71d9d23d-5e9f-b930-ab89-ef0525098768": {
+    "index": {
+      "bufferViewId": 3,
+      "count": 21414,
+      "size": 2
+    },
+    "primitiveGuid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+    "streams": [
+      {
+        "attributes": [
+          {
+            "bufferViewId": 2,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE_NORMALIZED",
+            "offset": 0,
+            "semantic": "COLOR_0",
+            "size": 4,
+            "stride": 8
+          },
+          {
+            "bufferViewId": 2,
+            "elementCount": 2,
+            "elementType": "HALF_FLOAT",
+            "offset": 4,
+            "semantic": "TEXCOORD_0",
+            "size": 4,
+            "stride": 8
+          }
+        ],
+        "bufferViewId": 2,
+        "length": 32504,
+        "offset": 227840,
+        "stride": 8
+      },
+      {
+        "attributes": [
+          {
+            "bufferViewId": 0,
+            "elementCount": 3,
+            "elementType": "FLOAT",
+            "offset": 0,
+            "semantic": "POSITION",
+            "size": 12,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 0,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE_NORMALIZED",
+            "offset": 24,
+            "semantic": "WEIGHTS_1",
+            "size": 4,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 0,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE_NORMALIZED",
+            "offset": 20,
+            "semantic": "WEIGHTS_0",
+            "size": 4,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 0,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE",
+            "offset": 16,
+            "semantic": "JOINTS_1",
+            "size": 4,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 0,
+            "elementCount": 4,
+            "elementType": "UNSIGNED_BYTE",
+            "offset": 12,
+            "semantic": "JOINTS_0",
+            "size": 4,
+            "stride": 28
+          }
+        ],
+        "bufferViewId": 0,
+        "length": 113764,
+        "offset": 0,
+        "stride": 28
+      },
+      {
+        "attributes": [
+          {
+            "bufferViewId": 1,
+            "elementCount": 4,
+            "elementType": "FLOAT",
+            "offset": 12,
+            "semantic": "TANGENT",
+            "size": 16,
+            "stride": 28
+          },
+          {
+            "bufferViewId": 1,
+            "elementCount": 3,
+            "elementType": "FLOAT",
+            "offset": 0,
+            "semantic": "NORMAL",
+            "size": 12,
+            "stride": 28
+          }
+        ],
+        "bufferViewId": 1,
+        "length": 113764,
+        "offset": 113920,
+        "stride": 28
+      }
+    ],
+    "vertexCount": 4063
+  }
+}
