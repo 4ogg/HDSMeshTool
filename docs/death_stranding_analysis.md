@@ -12,3 +12,6 @@
 ## Observations
 - Death Stranding stores vertex data per mesh with shared chunk tables, while Horizon Zero Dawn stores separate vertex streams per primitive.  The `.dmf` buffer view definitions map directly onto the chunked layout exposed by the new block IDs.
 - To support Death Stranding we will need new parsing code that can interpret the `VertexStreamSet` blocks, resolve their chunk tables, and slice the shared buffer into primitive-specific ranges before handing data to Blender.
+
+## Tooling
+- `tools/dump_ds_stream_map.py` links `VertexStreamSet` GUIDs from a `.core` file with the buffer view layout exported by Decima Workshop. The script emits a JSON document per mesh that records vertex counts, buffer view offsets/lengths, and attribute semantics for each shared stream, providing structured input for future importer work.【F:tools/dump_ds_stream_map.py†L1-L194】
