@@ -25,16 +25,25 @@ import mathutils
 import math
 import operator
 
+from .decima.ds_chunk_tables import load_layout as load_ds_chunk_layout
+from .decima.ds_vertex_streams import (
+    VertexStreamSet as DSVertexStreamSet,
+    load_stream_mapping as load_ds_stream_mapping,
+)
+from .decima.ds_export import export_death_stranding_mesh, DeathStrandingExportError
+
 from sys import platform
 import ctypes
 from ctypes import c_size_t, c_char_p, c_int32
 from pathlib import Path
-from typing import Union, Dict
+from typing import Dict, Optional, Union
 from enum import IntEnum
 from enum import IntFlag
 import subprocess
 # python debuger
 import pdb
+
+CURRENT_CORE_PATH: Optional[Path] = None
 
 class DXGI(IntEnum):
     DXGI_FORMAT_UNKNOWN = 0,
@@ -2169,6 +2178,12 @@ def ExportMesh(isLodMesh, resIndex, meshIndex, primIndex):
     stream = core + ".stream"
 
     vb: VertexArrayResource = prim.vertexBlock
+    if getattr(vb, "variant_name", None) == "DS":
+        try:
+            export_death_stranding_mesh(mesh, prim, primIndex, meshName)
+        except DeathStrandingExportError as exc:
+            print("Death Stranding export is not implemented: %s" % exc)
+        return
     vs: StreamData = vb.vertexStream
     ns: StreamData = vb.normalsStream
     us: StreamData = vb.uvStream
@@ -2422,22 +2437,62 @@ class Asset:
         self.skeletonPath = "" #path to skeleton asset (start with models/ end with .core).
 
 
-BlockIDs = {"RegularSkinnedMeshResource" : 10982056603708398958,
-        "VertexArrayResource" : 13522917709279820436,
-        "SkinnedMeshBoneBindings" : 232082505300933932,
-        "SkinnedMeshBoneBoundingBoxes" : 1425406424293942754,
-        "RegularSkinnedMeshResourceSkinInfo" : 4980347625154103665,
-        "RenderingPrimitiveResource" : 17523037150162385132,
-        "IndexArrayResource" : 12198706699739407665,
-        "RenderEffectResource" : 12029122079492233037,
-        "LodMeshResource" : 6871768592993170868,
-        "ShaderResource" : 5215210673454096253, #was 5215210673454096253 5561636305660569489
-        "TextureResource" : 17501462827539052646,
-        "MultiMeshResource" : 7022335006738406101,
-        "DataBufferResource" : 10234768860597628846,
-        "StaticMeshResource" : 17037430323200133752,
-        "SKDTreeResource" : 13505794420212475061,
-        "SkeletonHelpers" : 6306064744810253771
+class BlockIDSet:
+    def __init__(self, name, variants=None, **extra_variants):
+        self.name = name
+        self._variants = {}
+        if variants is not None:
+            if isinstance(variants, dict):
+                self._variants.update(variants)
+            else:
+                raise TypeError("variants must be provided as a mapping of variant name to ID")
+        if extra_variants:
+            self._variants.update(extra_variants)
+        if not self._variants:
+            raise ValueError(f"BlockIDSet '{name}' must define at least one variant")
+
+    def __contains__(self, value):
+        return value in self._variants.values()
+
+    def __iter__(self):
+        return iter(self._variants.values())
+
+    def __getitem__(self, variant_name):
+        return self._variants[variant_name]
+
+    def items(self):
+        return self._variants.items()
+
+    def variants(self):
+        return dict(self._variants)
+
+    def as_set(self):
+        return set(self._variants.values())
+
+    def variant_for(self, block_id):
+        for variant_name, variant_id in self._variants.items():
+            if variant_id == block_id:
+                return variant_name
+        return None
+
+
+BlockIDs = {
+        "RegularSkinnedMeshResource" : BlockIDSet("RegularSkinnedMeshResource", HZD=10982056603708398958),
+        "VertexArrayResource" : BlockIDSet("VertexArrayResource", HZD=13522917709279820436, DS=0x3AC29A123FAABAB4),
+        "SkinnedMeshBoneBindings" : BlockIDSet("SkinnedMeshBoneBindings", HZD=232082505300933932),
+        "SkinnedMeshBoneBoundingBoxes" : BlockIDSet("SkinnedMeshBoneBoundingBoxes", HZD=1425406424293942754),
+        "RegularSkinnedMeshResourceSkinInfo" : BlockIDSet("RegularSkinnedMeshResourceSkinInfo", HZD=4980347625154103665),
+        "RenderingPrimitiveResource" : BlockIDSet("RenderingPrimitiveResource", HZD=17523037150162385132, DS=0xEE49D93DA4C1F4B8),
+        "IndexArrayResource" : BlockIDSet("IndexArrayResource", HZD=12198706699739407665),
+        "RenderEffectResource" : BlockIDSet("RenderEffectResource", HZD=12029122079492233037),
+        "LodMeshResource" : BlockIDSet("LodMeshResource", HZD=6871768592993170868),
+        "ShaderResource" : BlockIDSet("ShaderResource", HZD=5215210673454096253), #was 5215210673454096253 5561636305660569489
+        "TextureResource" : BlockIDSet("TextureResource", HZD=17501462827539052646),
+        "MultiMeshResource" : BlockIDSet("MultiMeshResource", HZD=7022335006738406101),
+        "DataBufferResource" : BlockIDSet("DataBufferResource", HZD=10234768860597628846, DS=0x0B0D03C7E087F38E),
+        "StaticMeshResource" : BlockIDSet("StaticMeshResource", HZD=17037430323200133752),
+        "SKDTreeResource" : BlockIDSet("SKDTreeResource", HZD=13505794420212475061),
+        "SkeletonHelpers" : BlockIDSet("SkeletonHelpers", HZD=6306064744810253771)
             }
 asset = Asset()
 
@@ -2446,10 +2501,39 @@ class DataBlock:
         r = ByteReader
 
         self.expectedID = expectedID
+        self.expected_ids = None
+        self.variant_name = None
+        self.block_type = None
+        variant_lookup = None
+        if isinstance(expectedID, BlockIDSet):
+            variant_lookup = expectedID
+            self.block_type = expectedID.name
+            self.expected_ids = expectedID.as_set()
+        elif expectedID not in (0, None):
+            if isinstance(expectedID, dict):
+                variant_lookup = expectedID
+                self.expected_ids = set(expectedID.values())
+            elif isinstance(expectedID, (set, tuple, list)):
+                self.expected_ids = set(expectedID)
+            else:
+                self.expected_ids = {expectedID}
         self.ID = r.uint64(f)
-        if expectedID != 0:
-            if self.ID != self.expectedID:
-                raise Exception("%s -- offset %d  --  Invalid Block ID: got %d expected %d"%(self.__class__.__name__,f.tell()-8,self.ID ,self.expectedID))
+        if self.expected_ids:
+            if self.ID not in self.expected_ids:
+                expected_desc = ", ".join(f"0x{id_value:016X}" for id_value in sorted(self.expected_ids))
+                raise Exception("%s -- offset %d  --  Invalid Block ID: got 0x%016X expected one of %s" % (
+                    self.__class__.__name__,
+                    f.tell()-8,
+                    self.ID,
+                    expected_desc))
+            if variant_lookup:
+                if isinstance(variant_lookup, BlockIDSet):
+                    self.variant_name = variant_lookup.variant_for(self.ID)
+                else:
+                    for name, variant_id in variant_lookup.items():
+                        if variant_id == self.ID:
+                            self.variant_name = name
+                            break
         self.size = r.int32(f)
         self.blockStartOffset = f.tell()
         self.guid = r.guid(f)
@@ -2947,10 +3031,67 @@ class Reference:
                     self.externalFile = r.hashtext(f)
 
 class VertexArrayResource(DataBlock):
-    def __init__(self,f,expectedGuid):
+    def __init__(self, f, expectedGuid, *, primitive_guid=None):
         super().__init__(f,BlockIDs["VertexArrayResource"],expectedGuid)
         r = ByteReader
         self.posVCount = f.tell()
+        if self.variant_name == "DS":
+            self.inStream = True
+            self.vertexStream = None
+            self.normalsStream = None
+            self.uvStream = None
+            block_end = self.blockStartOffset + self.size
+            self.ds_vertex_set = DSVertexStreamSet.parse(r, f, block_end=block_end)
+            self.vertexCount = self.ds_vertex_set.vertex_count
+            self.streamDescriptors = self.ds_vertex_set.streams
+            self.streamRefCount = self.ds_vertex_set.stream_count
+            self.ds_stream_map_entry = None
+            ds_layout_entry = None
+            self.ds_primitive_guid = primitive_guid
+
+            if CURRENT_CORE_PATH is not None:
+                try:
+                    layout = load_ds_chunk_layout(CURRENT_CORE_PATH)
+                except FileNotFoundError:
+                    layout = None
+                if layout is not None:
+                    ds_layout_entry = layout.get(expectedGuid)
+
+            if ds_layout_entry is not None:
+                self._initialise_ds_streams_from_layout(
+                    ds_layout_entry, primitive_guid=primitive_guid
+                )
+                self.vertexCount = ds_layout_entry.vertex_count or self.vertexCount
+            else:
+                if CURRENT_CORE_PATH is not None:
+                    mapping = load_ds_stream_mapping(CURRENT_CORE_PATH)
+                else:
+                    mapping = None
+
+                if mapping:
+                    entry = mapping.get(str(expectedGuid))
+                    if entry:
+                        self.ds_stream_map_entry = entry
+                        self._initialise_ds_streams_from_mapping(entry)
+                    else:
+                        print(
+                            f"[warn] Death Stranding stream mapping missing for {expectedGuid}"
+                        )
+                else:
+                    print(
+                        "[warn] Death Stranding chunk mapping JSON not found; "
+                        "expected <core>.chunk_tables.json or legacy <core>.streams.json"
+                    )
+
+            if self.vertexStream is None or self.uvStream is None:
+                raise RuntimeError(
+                    "Death Stranding vertex streams could not be resolved; "
+                    "provide a chunk table breakdown for the mesh"
+                )
+
+            self.EndBlock(f)
+            return
+
         self.vertexCount = r.uint32(f)
         self.streamRefCount = r.uint32(f)
         self.inStream = r.bool(f)
@@ -2969,11 +3110,171 @@ class VertexArrayResource(DataBlock):
     def __str__(self):
         s = "\n--VertexArrayResource"
         s += "\n'''Vertex Count = %d  |  inStream = %s"%(self.vertexCount,str(self.inStream))
+        if hasattr(self, "ds_vertex_set"):
+            s += "\n----DS Stream Set with %d descriptors" % len(self.streamDescriptors)
+            for index, descriptor in enumerate(self.streamDescriptors):
+                s += "\n------Stream %d header: %s" % (index, descriptor.header)
+                s += "\n------Stream %d chunk GUID: %s" % (index, descriptor.chunk_guid)
+                if descriptor.tail:
+                    s += "\n------Stream %d tail: %s" % (index, descriptor.tail)
+            if getattr(self, "ds_stream_map_entry", None):
+                s += "\n----DS stream mapping present"
+            return s
         s += "\n----VertexStream " + self.vertexStream.__str__()
         if self.normalsStream:
             s += "\n----NormalsStream " + self.normalsStream.__str__()
         s += "\n----UVStream " + self.uvStream.__str__()
         return s
+
+    def _initialise_ds_streams_from_layout(self, layout, *, primitive_guid=None):
+        """Populate streams from a decoded chunk-table layout."""
+
+        def make_desc(offset, storage, count, element):
+            desc = StreamData.VertexElementDesc.__new__(StreamData.VertexElementDesc)
+            desc.offset = offset
+            desc.storageType = storage
+            desc.count = count
+            desc.elementType = element
+            return desc
+
+        def build_stream(role):
+            stream_layout = layout.streams.get(role) if layout.streams else None
+            if stream_layout is None or not stream_layout.chunks:
+                return None
+            chunk = None
+            if primitive_guid is not None:
+                matching = stream_layout.chunks_for(primitive_guid)
+                if len(matching) > 1:
+                    raise RuntimeError(
+                        "Death Stranding chunk tables produced multiple slices "
+                        f"for primitive {primitive_guid} in stream '{role}'"
+                    )
+                if matching:
+                    chunk = matching[0]
+            if chunk is None:
+                chunk = (
+                    stream_layout.chunk_for(primitive_guid)
+                    if primitive_guid is not None
+                    else None
+                )
+            if chunk is None:
+                if stream_layout.chunks:
+                    chunk = stream_layout.chunks[0]
+                    if primitive_guid is not None:
+                        print(
+                            "[warn] Death Stranding chunk table missing entry for",
+                            primitive_guid,
+                            f"in stream '{role}'; falling back to first chunk",
+                        )
+                else:
+                    return None
+            stream = StreamData.__new__(StreamData)
+            stream.streamInfo = None
+            stream.stride = stream_layout.stride
+
+            if role == "positions":
+                descriptors = [
+                    make_desc(0, StreamData.VertexElementDesc.StorageType.Float, 3, StreamData.VertexElementDesc.ElementType.Pos),
+                    make_desc(12, StreamData.VertexElementDesc.StorageType.UnsignedByte, 4, StreamData.VertexElementDesc.ElementType.BlendIndices),
+                    make_desc(16, StreamData.VertexElementDesc.StorageType.UnsignedByte, 4, StreamData.VertexElementDesc.ElementType.BlendIndices2),
+                    make_desc(20, StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized, 4, StreamData.VertexElementDesc.ElementType.BlendWeights),
+                    make_desc(24, StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized, 4, StreamData.VertexElementDesc.ElementType.BlendWeights2),
+                ]
+            elif role == "normals":
+                descriptors = [
+                    make_desc(0, StreamData.VertexElementDesc.StorageType.Float, 3, StreamData.VertexElementDesc.ElementType.Normal),
+                    make_desc(12, StreamData.VertexElementDesc.StorageType.Float, 4, StreamData.VertexElementDesc.ElementType.Tangent),
+                ]
+            else:
+                descriptors = [
+                    make_desc(0, StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized, 4, StreamData.VertexElementDesc.ElementType.Color),
+                    make_desc(4, StreamData.VertexElementDesc.StorageType.HalfFloat, 2, StreamData.VertexElementDesc.ElementType.UV0),
+                ]
+
+            stream.elementInfo = descriptors
+            stream.elementInfoCount = len(descriptors)
+            stream.streamAbsOffset = chunk.offset
+            stream.streamLength = chunk.length
+            stream.vertexCount = getattr(chunk, "vertex_count", None)
+            return stream
+
+        self.vertexStream = build_stream("positions")
+        self.normalsStream = build_stream("normals")
+        self.uvStream = build_stream("color_uv")
+
+    def _initialise_ds_streams_from_mapping(self, entry):
+        """Populate :class:`StreamData` objects from a Decima Workshop mapping."""
+
+        storage_map = {
+            "FLOAT": StreamData.VertexElementDesc.StorageType.Float,
+            "HALF_FLOAT": StreamData.VertexElementDesc.StorageType.HalfFloat,
+            "UNSIGNED_BYTE_NORMALIZED": StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized,
+            "UNSIGNED_BYTE": StreamData.VertexElementDesc.StorageType.UnsignedByte,
+            "UNSIGNED_SHORT": StreamData.VertexElementDesc.StorageType.UnsignedShort,
+            "UNSIGNED_SHORT_NORMALIZED": StreamData.VertexElementDesc.StorageType.UnsignedShortNormalized,
+        }
+
+        element_map = {
+            "POSITION": StreamData.VertexElementDesc.ElementType.Pos,
+            "NORMAL": StreamData.VertexElementDesc.ElementType.Normal,
+            "TANGENT": StreamData.VertexElementDesc.ElementType.Tangent,
+            "COLOR_0": StreamData.VertexElementDesc.ElementType.Color,
+            "TEXCOORD_0": StreamData.VertexElementDesc.ElementType.UV0,
+            "TEXCOORD_1": StreamData.VertexElementDesc.ElementType.UV1,
+            "TEXCOORD_2": StreamData.VertexElementDesc.ElementType.UV2,
+            "TEXCOORD_3": StreamData.VertexElementDesc.ElementType.UV3,
+            "TEXCOORD_4": StreamData.VertexElementDesc.ElementType.UV4,
+            "TEXCOORD_5": StreamData.VertexElementDesc.ElementType.UV5,
+            "TEXCOORD_6": StreamData.VertexElementDesc.ElementType.UV6,
+            "JOINTS_0": StreamData.VertexElementDesc.ElementType.BlendIndices,
+            "JOINTS_1": StreamData.VertexElementDesc.ElementType.BlendIndices2,
+            "WEIGHTS_0": StreamData.VertexElementDesc.ElementType.BlendWeights,
+            "WEIGHTS_1": StreamData.VertexElementDesc.ElementType.BlendWeights2,
+        }
+
+        streams_payload = entry.get("streams", [])
+        resolved_streams = []
+
+        for stream_payload in streams_payload:
+            stream = StreamData.__new__(StreamData)
+            stream.streamInfo = None
+            stream.stride = int(stream_payload.get("stride", 0))
+            element_info = []
+
+            for attribute in stream_payload.get("attributes", []):
+                semantic = attribute.get("semantic")
+                element_type = element_map.get(semantic)
+                storage_type = storage_map.get(attribute.get("elementType"))
+                if element_type is None or storage_type is None:
+                    continue
+
+                desc = StreamData.VertexElementDesc.__new__(StreamData.VertexElementDesc)
+                desc.offset = int(attribute.get("offset", 0))
+                desc.storageType = storage_type
+                desc.count = int(attribute.get("elementCount", 0))
+                desc.elementType = element_type
+                element_info.append(desc)
+
+            stream.elementInfo = element_info
+            stream.elementInfoCount = len(element_info)
+            stream.streamAbsOffset = int(stream_payload.get("offset", 0))
+            stream.streamLength = int(stream_payload.get("length", stream.stride * self.vertexCount))
+
+            resolved_streams.append((stream, {desc.elementType for desc in element_info}))
+
+        for stream, semantics in resolved_streams:
+            if StreamData.VertexElementDesc.ElementType.Pos in semantics:
+                self.vertexStream = stream
+            elif semantics & {
+                StreamData.VertexElementDesc.ElementType.Normal,
+                StreamData.VertexElementDesc.ElementType.Tangent,
+                StreamData.VertexElementDesc.ElementType.TangentBFlip,
+                StreamData.VertexElementDesc.ElementType.Binormal,
+            }:
+                self.normalsStream = stream
+            else:
+                self.uvStream = stream
+
 class IndexArrayResource(DataBlock):
     def __init__(self,f,expectedGuid):
         super().__init__(f,BlockIDs["IndexArrayResource"],expectedGuid)
@@ -3140,7 +3441,9 @@ class RenderingPrimitiveResource(DataBlock):
         self.EndBlock(f)
 
         if self.vertexRef.type != 0:
-            self.vertexBlock = VertexArrayResource(f,self.vertexRef.guid)
+            self.vertexBlock = VertexArrayResource(
+                f, self.vertexRef.guid, primitive_guid=self.guid
+            )
         if self.indexRef.type != 0:
             self.faceBlock = IndexArrayResource(f,self.indexRef.guid)
         if self.skdTreeRef.type != 0:
@@ -3342,9 +3645,11 @@ def ReadCoreFile():
     r = ByteReader
     HZDEditor = bpy.context.scene.HZDEditor
     global asset
+    global CURRENT_CORE_PATH
     asset = Asset()
 
     core = Path(HZDEditor.HZDAbsPath)
+    CURRENT_CORE_PATH = core
     coresize = os.path.getsize(core)
     with open(core, "rb") as f:
         while f.tell() < coresize:
@@ -3352,13 +3657,13 @@ def ReadCoreFile():
             ID = r.uint64(f)
             f.seek(-8,1)
             # print(ID)
-            if ID == BlockIDs["LodMeshResource"]: # LodMeshResource
+            if ID in BlockIDs["LodMeshResource"]: # LodMeshResource
                 asset.LodMeshResources.append(LodMeshResource(f))
-            elif ID == BlockIDs["MultiMeshResource"]: # MultiMeshResource
+            elif ID in BlockIDs["MultiMeshResource"]: # MultiMeshResource
                 asset.MultiMeshResources.append(MultiMeshResource(f))
-            elif ID == BlockIDs["RegularSkinnedMeshResource"]: # RegularSkinnedMeshResource
+            elif ID in BlockIDs["RegularSkinnedMeshResource"]: # RegularSkinnedMeshResource
                 asset.RegularSkinnedMeshResources.append(RegularSkinnedMeshResource(f))
-            elif ID == BlockIDs["StaticMeshResource"]: # StaticMeshResource
+            elif ID in BlockIDs["StaticMeshResource"]: # StaticMeshResource
                 asset.StaticMeshResources.append(StaticMeshResource(f))
             else:
                 raise Exception("This file is not supported.",ID)
