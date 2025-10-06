@@ -25,6 +25,7 @@ import mathutils
 import math
 import operator
 
+from .decima.ds_chunk_tables import load_layout as load_ds_chunk_layout
 from .decima.ds_vertex_streams import (
     VertexStreamSet as DSVertexStreamSet,
     load_stream_mapping as load_ds_stream_mapping,
@@ -3045,32 +3046,44 @@ class VertexArrayResource(DataBlock):
             self.streamDescriptors = self.ds_vertex_set.streams
             self.streamRefCount = self.ds_vertex_set.stream_count
             self.ds_stream_map_entry = None
+            ds_layout_entry = None
 
             if CURRENT_CORE_PATH is not None:
-                mapping = load_ds_stream_mapping(CURRENT_CORE_PATH)
-            else:
-                mapping = None
+                try:
+                    layout = load_ds_chunk_layout(CURRENT_CORE_PATH)
+                except FileNotFoundError:
+                    layout = None
+                if layout is not None:
+                    ds_layout_entry = layout.get(expectedGuid)
 
-            if mapping:
-                entry = mapping.get(str(expectedGuid))
-                if entry:
-                    self.ds_stream_map_entry = entry
-                    self._initialise_ds_streams_from_mapping(entry)
+            if ds_layout_entry is not None:
+                self._initialise_ds_streams_from_layout(ds_layout_entry)
+                self.vertexCount = ds_layout_entry.vertex_count or self.vertexCount
+            else:
+                if CURRENT_CORE_PATH is not None:
+                    mapping = load_ds_stream_mapping(CURRENT_CORE_PATH)
+                else:
+                    mapping = None
+
+                if mapping:
+                    entry = mapping.get(str(expectedGuid))
+                    if entry:
+                        self.ds_stream_map_entry = entry
+                        self._initialise_ds_streams_from_mapping(entry)
+                    else:
+                        print(
+                            f"[warn] Death Stranding stream mapping missing for {expectedGuid}"
+                        )
                 else:
                     print(
-                        f"[warn] Death Stranding stream mapping missing for {expectedGuid}"
+                        "[warn] Death Stranding chunk mapping JSON not found; "
+                        "expected <core>.chunk_tables.json or legacy <core>.streams.json"
                     )
-            else:
-                print(
-                    "[warn] Death Stranding stream mapping JSON not found; "
-                    "run tools/dump_ds_stream_map.py to generate it"
-                )
 
             if self.vertexStream is None or self.uvStream is None:
                 raise RuntimeError(
                     "Death Stranding vertex streams could not be resolved; "
-                    "ensure a <core>.streams.json mapping exists and includes "
-                    f"{expectedGuid}"
+                    "provide a chunk table breakdown for the mesh"
                 )
 
             self.EndBlock(f)
@@ -3109,6 +3122,55 @@ class VertexArrayResource(DataBlock):
             s += "\n----NormalsStream " + self.normalsStream.__str__()
         s += "\n----UVStream " + self.uvStream.__str__()
         return s
+
+    def _initialise_ds_streams_from_layout(self, layout):
+        """Populate streams from a decoded chunk-table layout."""
+
+        def make_desc(offset, storage, count, element):
+            desc = StreamData.VertexElementDesc.__new__(StreamData.VertexElementDesc)
+            desc.offset = offset
+            desc.storageType = storage
+            desc.count = count
+            desc.elementType = element
+            return desc
+
+        def build_stream(role):
+            stream_layout = layout.streams.get(role) if layout.streams else None
+            if stream_layout is None or not stream_layout.chunks:
+                return None
+            chunk = stream_layout.chunks[0]
+            stream = StreamData.__new__(StreamData)
+            stream.streamInfo = None
+            stream.stride = stream_layout.stride
+
+            if role == "positions":
+                descriptors = [
+                    make_desc(0, StreamData.VertexElementDesc.StorageType.Float, 3, StreamData.VertexElementDesc.ElementType.Pos),
+                    make_desc(12, StreamData.VertexElementDesc.StorageType.UnsignedByte, 4, StreamData.VertexElementDesc.ElementType.BlendIndices),
+                    make_desc(16, StreamData.VertexElementDesc.StorageType.UnsignedByte, 4, StreamData.VertexElementDesc.ElementType.BlendIndices2),
+                    make_desc(20, StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized, 4, StreamData.VertexElementDesc.ElementType.BlendWeights),
+                    make_desc(24, StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized, 4, StreamData.VertexElementDesc.ElementType.BlendWeights2),
+                ]
+            elif role == "normals":
+                descriptors = [
+                    make_desc(0, StreamData.VertexElementDesc.StorageType.Float, 3, StreamData.VertexElementDesc.ElementType.Normal),
+                    make_desc(12, StreamData.VertexElementDesc.StorageType.Float, 4, StreamData.VertexElementDesc.ElementType.Tangent),
+                ]
+            else:
+                descriptors = [
+                    make_desc(0, StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized, 4, StreamData.VertexElementDesc.ElementType.Color),
+                    make_desc(4, StreamData.VertexElementDesc.StorageType.HalfFloat, 2, StreamData.VertexElementDesc.ElementType.UV0),
+                ]
+
+            stream.elementInfo = descriptors
+            stream.elementInfoCount = len(descriptors)
+            stream.streamAbsOffset = chunk.offset
+            stream.streamLength = chunk.length
+            return stream
+
+        self.vertexStream = build_stream("positions")
+        self.normalsStream = build_stream("normals")
+        self.uvStream = build_stream("color_uv")
 
     def _initialise_ds_streams_from_mapping(self, entry):
         """Populate :class:`StreamData` objects from a Decima Workshop mapping."""
