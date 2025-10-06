@@ -1,0 +1,200 @@
+{
+  "71d9d23d-5e9f-b930-ab89-ef0525098768": {
+    "vertex_count": 4063,
+    "streams": {
+      "positions_weights": {
+        "chunk_table_guid": "73aef770-8cd9-b334-872e-31ae6c455938",
+        "stride": 28,
+        "total_vertices": 4063,
+        "records": [
+          {
+            "primitive_guid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+            "start_offset": 0,
+            "length_bytes": 113764,
+            "vertex_count": 4063,
+            "stride": 28,
+            "padding_before": 0,
+            "hexdump": "668a873d2079b83dfcb4663fd6b8d4bb"
+          }
+        ]
+      },
+      "normals_tangents": {
+        "chunk_table_guid": "c0d13d1e-f89f-a33f-88f7-842e669c5be3",
+        "stride": 28,
+        "total_vertices": 4063,
+        "records": [
+          {
+            "primitive_guid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+            "start_offset": 113920,
+            "length_bytes": 113764,
+            "vertex_count": 4063,
+            "stride": 28,
+            "padding_before": 156,
+            "hexdump": "3ac9b73d88b57b3fa58422be273377bf"
+          }
+        ]
+      },
+      "colour_uv": {
+        "chunk_table_guid": "550ecb89-0945-d730-a1d7-668968f44b62",
+        "stride": 8,
+        "total_vertices": 4063,
+        "records": [
+          {
+            "primitive_guid": "9b715ef6-7a73-0834-b173-8bc69e88c7d8",
+            "start_offset": 227840,
+            "length_bytes": 32504,
+            "vertex_count": 4063,
+            "stride": 8,
+            "padding_before": 156,
+            "hexdump": "ffffffffeb3aa23affffffffe93a873a"
+          }
+        ]
+      }
+    }
+  },
+  "2c4982a5-e2cc-853b-9139-f09f0d1975de": {
+    "vertex_count": 7366,
+    "streams": {
+      "positions_weights": {
+        "chunk_table_guid": "bba21687-2f53-c432-84f0-ece850642f48",
+        "stride": 28,
+        "total_vertices": 7366,
+        "records": [
+          {
+            "primitive_guid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+            "start_offset": 303360,
+            "length_bytes": 206248,
+            "vertex_count": 7366,
+            "stride": 28,
+            "padding_before": 180,
+            "hexdump": "7b389aba2e03d2bdfe53823fad01ab02"
+          }
+        ]
+      },
+      "normals_tangents": {
+        "chunk_table_guid": "a8233f6d-d4fe-da3b-9aba-c91a82c7c07b",
+        "stride": 28,
+        "total_vertices": 7366,
+        "records": [
+          {
+            "primitive_guid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+            "start_offset": 509696,
+            "length_bytes": 206248,
+            "vertex_count": 7366,
+            "stride": 28,
+            "padding_before": 88,
+            "hexdump": "85ceb93c2ff374bf3e59943eeeed7f3f"
+          }
+        ]
+      },
+      "colour_uv": {
+        "chunk_table_guid": "463d7939-3c59-dc3b-af6c-c6c9ebe8b161",
+        "stride": 8,
+        "total_vertices": 7366,
+        "records": [
+          {
+            "primitive_guid": "22424a18-0a95-c23a-81f0-42cab94869ed",
+            "start_offset": 716032,
+            "length_bytes": 58928,
+            "vertex_count": 7366,
+            "stride": 8,
+            "padding_before": 88,
+            "hexdump": "ffffffff043a4438ffffffff063a2138"
+          }
+        ]
+      }
+    }
+  },
+  "4d259e32-f0ce-a13d-9bc6-c5b9e32237ea": {
+    "vertex_count": 2331,
+    "streams": {
+      "positions_weights": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 2331,
+        "records": []
+      },
+      "normals_tangents": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 2331,
+        "records": []
+      },
+      "colour_uv": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 2331,
+        "records": []
+      }
+    }
+  },
+  "c7f32a67-a339-5139-80c2-17e342f6eb55": {
+    "vertex_count": 3155,
+    "streams": {
+      "positions_weights": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 3155,
+        "records": []
+      },
+      "normals_tangents": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 3155,
+        "records": []
+      },
+      "colour_uv": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 3155,
+        "records": []
+      }
+    }
+  },
+  "d744ed9b-a1b0-fd31-9b66-b81406c885a0": {
+    "vertex_count": 1285,
+    "streams": {
+      "positions_weights": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 1285,
+        "records": []
+      },
+      "normals_tangents": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 1285,
+        "records": []
+      },
+      "colour_uv": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 1285,
+        "records": []
+      }
+    }
+  },
+  "2acf9e83-ace6-2a36-bbf4-c952328850fc": {
+    "vertex_count": 1609,
+    "streams": {
+      "positions_weights": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 1609,
+        "records": []
+      },
+      "normals_tangents": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 1609,
+        "records": []
+      },
+      "colour_uv": {
+        "chunk_table_guid": null,
+        "stride": null,
+        "total_vertices": 1609,
+        "records": []
+      }
+    }
+  }
+}
