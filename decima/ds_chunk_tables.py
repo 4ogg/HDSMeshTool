@@ -23,10 +23,17 @@ class StreamLayout:
     chunks: Sequence[Chunk]
 
     def chunk_for(self, primitive_guid: UUID) -> Optional[Chunk]:
+        """Return the first chunk that matches ``primitive_guid``."""
+
         for chunk in self.chunks:
             if chunk.primitive_guid == primitive_guid:
                 return chunk
         return None
+
+    def chunks_for(self, primitive_guid: UUID) -> Sequence[Chunk]:
+        """Return all chunks referenced by ``primitive_guid``."""
+
+        return [chunk for chunk in self.chunks if chunk.primitive_guid == primitive_guid]
 
 
 @dataclass

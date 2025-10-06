@@ -43,7 +43,7 @@ Texture extraction, material creation, and node-group helpers continue to functi
 
 Death Stranding stores vertex data as mesh-wide stream sets with shared chunk tables. The add-on now recognises these resources, captures per-stream headers, and can import meshes when supplied with a `<core>.chunk_tables.json` breakdown (see `DSfiles/mesh_test.chunk_tables.json` for an example). Export and automated chunk decoding remain outstanding:
 
-- Import now records `VertexStreamSet` descriptors alongside the resolved chunk-table links and stream headers. The remaining task is to slice the mesh-wide vertex buffers per primitive before geometry can appear inside Blender.
+- Import consumes `<core>.chunk_tables.json` breakdowns to build Blender `StreamData` objects for positions, normals/tangents, and colour/UV streams. Native decoding of the binary `StreamChunkTable` payloads remains a TODO, so the importer still relies on precomputed JSON sidecars.
 - Export short-circuits with a `DeathStrandingExportError` because chunked stream repacking has not been written. This prevents Horizon-era code paths from corrupting Death Stranding assets.
 - The `tools/analyze_ds_core.py` utility can be used to inspect `.core` files, study block relationships, and collect GUIDs for future implementation work:
   ```bash
@@ -54,7 +54,7 @@ Refer to `docs/death_stranding_analysis.md` for the observed stream layout, bloc
 
 ## Remaining work
 
-- [x] Slice Death Stranding `VertexStreamSet` buffers into `StreamData` objects when provided with a `<core>.chunk_tables.json` breakdown derived from the game's chunk tables. Native decoding without external metadata is still an open research item.
+- [ ] Decode Death Stranding `StreamChunkTable` blocks directly so the importer no longer depends on `<core>.chunk_tables.json` sidecars.
 - [ ] Rebuild Death Stranding chunk tables during export, packing vertex and index data per mesh before writing `.stream` files and clearing the `DeathStrandingExportError` guard.
 - [ ] Audit index buffer handling to confirm whether Death Stranding also shares chunked indices across primitives or requires additional metadata.
 - [ ] Extend automated tests/dev workflows to cover Death Stranding parsing once geometry import succeeds.

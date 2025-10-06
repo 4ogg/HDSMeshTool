@@ -3031,7 +3031,7 @@ class Reference:
                     self.externalFile = r.hashtext(f)
 
 class VertexArrayResource(DataBlock):
-    def __init__(self,f,expectedGuid):
+    def __init__(self, f, expectedGuid, *, primitive_guid=None):
         super().__init__(f,BlockIDs["VertexArrayResource"],expectedGuid)
         r = ByteReader
         self.posVCount = f.tell()
@@ -3047,6 +3047,7 @@ class VertexArrayResource(DataBlock):
             self.streamRefCount = self.ds_vertex_set.stream_count
             self.ds_stream_map_entry = None
             ds_layout_entry = None
+            self.ds_primitive_guid = primitive_guid
 
             if CURRENT_CORE_PATH is not None:
                 try:
@@ -3057,7 +3058,9 @@ class VertexArrayResource(DataBlock):
                     ds_layout_entry = layout.get(expectedGuid)
 
             if ds_layout_entry is not None:
-                self._initialise_ds_streams_from_layout(ds_layout_entry)
+                self._initialise_ds_streams_from_layout(
+                    ds_layout_entry, primitive_guid=primitive_guid
+                )
                 self.vertexCount = ds_layout_entry.vertex_count or self.vertexCount
             else:
                 if CURRENT_CORE_PATH is not None:
@@ -3123,7 +3126,7 @@ class VertexArrayResource(DataBlock):
         s += "\n----UVStream " + self.uvStream.__str__()
         return s
 
-    def _initialise_ds_streams_from_layout(self, layout):
+    def _initialise_ds_streams_from_layout(self, layout, *, primitive_guid=None):
         """Populate streams from a decoded chunk-table layout."""
 
         def make_desc(offset, storage, count, element):
@@ -3138,7 +3141,33 @@ class VertexArrayResource(DataBlock):
             stream_layout = layout.streams.get(role) if layout.streams else None
             if stream_layout is None or not stream_layout.chunks:
                 return None
-            chunk = stream_layout.chunks[0]
+            chunk = None
+            if primitive_guid is not None:
+                matching = stream_layout.chunks_for(primitive_guid)
+                if len(matching) > 1:
+                    raise RuntimeError(
+                        "Death Stranding chunk tables produced multiple slices "
+                        f"for primitive {primitive_guid} in stream '{role}'"
+                    )
+                if matching:
+                    chunk = matching[0]
+            if chunk is None:
+                chunk = (
+                    stream_layout.chunk_for(primitive_guid)
+                    if primitive_guid is not None
+                    else None
+                )
+            if chunk is None:
+                if stream_layout.chunks:
+                    chunk = stream_layout.chunks[0]
+                    if primitive_guid is not None:
+                        print(
+                            "[warn] Death Stranding chunk table missing entry for",
+                            primitive_guid,
+                            f"in stream '{role}'; falling back to first chunk",
+                        )
+                else:
+                    return None
             stream = StreamData.__new__(StreamData)
             stream.streamInfo = None
             stream.stride = stream_layout.stride
@@ -3166,6 +3195,7 @@ class VertexArrayResource(DataBlock):
             stream.elementInfoCount = len(descriptors)
             stream.streamAbsOffset = chunk.offset
             stream.streamLength = chunk.length
+            stream.vertexCount = getattr(chunk, "vertex_count", None)
             return stream
 
         self.vertexStream = build_stream("positions")
@@ -3411,7 +3441,9 @@ class RenderingPrimitiveResource(DataBlock):
         self.EndBlock(f)
 
         if self.vertexRef.type != 0:
-            self.vertexBlock = VertexArrayResource(f,self.vertexRef.guid)
+            self.vertexBlock = VertexArrayResource(
+                f, self.vertexRef.guid, primitive_guid=self.guid
+            )
         if self.indexRef.type != 0:
             self.faceBlock = IndexArrayResource(f,self.indexRef.guid)
         if self.skdTreeRef.type != 0:
