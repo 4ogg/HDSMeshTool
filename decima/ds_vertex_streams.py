@@ -1,8 +1,10 @@
 """Death Stranding-specific stream parsing helpers."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Sequence, Tuple
+from typing import List, Mapping, MutableMapping, Optional, Sequence, Tuple
 from uuid import UUID
 
 from .typing import ByteReaderProtocol
@@ -75,3 +77,28 @@ class VertexStreamSet:
             streams=streams,
             trailing=trailing,
         )
+
+
+_STREAM_MAP_CACHE: MutableMapping[Path, Mapping[str, object]] = {}
+
+
+def load_stream_mapping(core_path: Path) -> Optional[Mapping[str, object]]:
+    """Return the Decima Workshop-derived stream map for ``core_path``.
+
+    The helper looks for a sibling JSON file with the ``.streams.json`` suffix
+    created by :mod:`tools.dump_ds_stream_map`.  The payload is cached so that
+    multiple primitives can reuse the decoded mapping without re-reading the
+    file.
+    """
+
+    mapping_path = core_path.with_suffix(core_path.suffix + ".streams.json")
+    if not mapping_path.exists():
+        return None
+
+    cached = _STREAM_MAP_CACHE.get(mapping_path)
+    if cached is not None:
+        return cached
+
+    payload: Mapping[str, object] = json.loads(mapping_path.read_text())
+    _STREAM_MAP_CACHE[mapping_path] = payload
+    return payload

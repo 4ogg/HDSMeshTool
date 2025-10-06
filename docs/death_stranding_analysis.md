@@ -14,4 +14,4 @@
 - To support Death Stranding we will need new parsing code that can interpret the `VertexStreamSet` blocks, resolve their chunk tables, and slice the shared buffer into primitive-specific ranges before handing data to Blender.
 
 ## Tooling
-- `tools/dump_ds_stream_map.py` links `VertexStreamSet` GUIDs from a `.core` file with the buffer view layout exported by Decima Workshop. The script emits a JSON document per mesh that records vertex counts, buffer view offsets/lengths, and attribute semantics for each shared stream, providing structured input for future importer work.【F:tools/dump_ds_stream_map.py†L1-L194】
+- `tools/dump_ds_stream_map.py` links `VertexStreamSet` GUIDs from a `.core` file with the buffer view layout exported by Decima Workshop. The script emits a JSON document per mesh that records vertex counts, buffer view offsets/lengths, and attribute semantics for each shared stream, providing structured input for the importer. The Blender add-on consumes the generated `<core>.streams.json` file to materialise `StreamData` objects while native chunk-table decoding remains in progress.【F:tools/dump_ds_stream_map.py†L1-L194】

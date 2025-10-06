@@ -25,19 +25,24 @@ import mathutils
 import math
 import operator
 
-from .decima.ds_vertex_streams import VertexStreamSet as DSVertexStreamSet
+from .decima.ds_vertex_streams import (
+    VertexStreamSet as DSVertexStreamSet,
+    load_stream_mapping as load_ds_stream_mapping,
+)
 from .decima.ds_export import export_death_stranding_mesh, DeathStrandingExportError
 
 from sys import platform
 import ctypes
 from ctypes import c_size_t, c_char_p, c_int32
 from pathlib import Path
-from typing import Union, Dict
+from typing import Dict, Optional, Union
 from enum import IntEnum
 from enum import IntFlag
 import subprocess
 # python debuger
 import pdb
+
+CURRENT_CORE_PATH: Optional[Path] = None
 
 class DXGI(IntEnum):
     DXGI_FORMAT_UNKNOWN = 0,
@@ -3030,7 +3035,6 @@ class VertexArrayResource(DataBlock):
         r = ByteReader
         self.posVCount = f.tell()
         if self.variant_name == "DS":
-            self.streamRefCount = 0
             self.inStream = True
             self.vertexStream = None
             self.normalsStream = None
@@ -3039,6 +3043,36 @@ class VertexArrayResource(DataBlock):
             self.ds_vertex_set = DSVertexStreamSet.parse(r, f, block_end=block_end)
             self.vertexCount = self.ds_vertex_set.vertex_count
             self.streamDescriptors = self.ds_vertex_set.streams
+            self.streamRefCount = self.ds_vertex_set.stream_count
+            self.ds_stream_map_entry = None
+
+            if CURRENT_CORE_PATH is not None:
+                mapping = load_ds_stream_mapping(CURRENT_CORE_PATH)
+            else:
+                mapping = None
+
+            if mapping:
+                entry = mapping.get(str(expectedGuid))
+                if entry:
+                    self.ds_stream_map_entry = entry
+                    self._initialise_ds_streams_from_mapping(entry)
+                else:
+                    print(
+                        f"[warn] Death Stranding stream mapping missing for {expectedGuid}"
+                    )
+            else:
+                print(
+                    "[warn] Death Stranding stream mapping JSON not found; "
+                    "run tools/dump_ds_stream_map.py to generate it"
+                )
+
+            if self.vertexStream is None or self.uvStream is None:
+                raise RuntimeError(
+                    "Death Stranding vertex streams could not be resolved; "
+                    "ensure a <core>.streams.json mapping exists and includes "
+                    f"{expectedGuid}"
+                )
+
             self.EndBlock(f)
             return
 
@@ -3067,12 +3101,88 @@ class VertexArrayResource(DataBlock):
                 s += "\n------Stream %d chunk GUID: %s" % (index, descriptor.chunk_guid)
                 if descriptor.tail:
                     s += "\n------Stream %d tail: %s" % (index, descriptor.tail)
+            if getattr(self, "ds_stream_map_entry", None):
+                s += "\n----DS stream mapping present"
             return s
         s += "\n----VertexStream " + self.vertexStream.__str__()
         if self.normalsStream:
             s += "\n----NormalsStream " + self.normalsStream.__str__()
         s += "\n----UVStream " + self.uvStream.__str__()
         return s
+
+    def _initialise_ds_streams_from_mapping(self, entry):
+        """Populate :class:`StreamData` objects from a Decima Workshop mapping."""
+
+        storage_map = {
+            "FLOAT": StreamData.VertexElementDesc.StorageType.Float,
+            "HALF_FLOAT": StreamData.VertexElementDesc.StorageType.HalfFloat,
+            "UNSIGNED_BYTE_NORMALIZED": StreamData.VertexElementDesc.StorageType.UnsignedByteNormalized,
+            "UNSIGNED_BYTE": StreamData.VertexElementDesc.StorageType.UnsignedByte,
+            "UNSIGNED_SHORT": StreamData.VertexElementDesc.StorageType.UnsignedShort,
+            "UNSIGNED_SHORT_NORMALIZED": StreamData.VertexElementDesc.StorageType.UnsignedShortNormalized,
+        }
+
+        element_map = {
+            "POSITION": StreamData.VertexElementDesc.ElementType.Pos,
+            "NORMAL": StreamData.VertexElementDesc.ElementType.Normal,
+            "TANGENT": StreamData.VertexElementDesc.ElementType.Tangent,
+            "COLOR_0": StreamData.VertexElementDesc.ElementType.Color,
+            "TEXCOORD_0": StreamData.VertexElementDesc.ElementType.UV0,
+            "TEXCOORD_1": StreamData.VertexElementDesc.ElementType.UV1,
+            "TEXCOORD_2": StreamData.VertexElementDesc.ElementType.UV2,
+            "TEXCOORD_3": StreamData.VertexElementDesc.ElementType.UV3,
+            "TEXCOORD_4": StreamData.VertexElementDesc.ElementType.UV4,
+            "TEXCOORD_5": StreamData.VertexElementDesc.ElementType.UV5,
+            "TEXCOORD_6": StreamData.VertexElementDesc.ElementType.UV6,
+            "JOINTS_0": StreamData.VertexElementDesc.ElementType.BlendIndices,
+            "JOINTS_1": StreamData.VertexElementDesc.ElementType.BlendIndices2,
+            "WEIGHTS_0": StreamData.VertexElementDesc.ElementType.BlendWeights,
+            "WEIGHTS_1": StreamData.VertexElementDesc.ElementType.BlendWeights2,
+        }
+
+        streams_payload = entry.get("streams", [])
+        resolved_streams = []
+
+        for stream_payload in streams_payload:
+            stream = StreamData.__new__(StreamData)
+            stream.streamInfo = None
+            stream.stride = int(stream_payload.get("stride", 0))
+            element_info = []
+
+            for attribute in stream_payload.get("attributes", []):
+                semantic = attribute.get("semantic")
+                element_type = element_map.get(semantic)
+                storage_type = storage_map.get(attribute.get("elementType"))
+                if element_type is None or storage_type is None:
+                    continue
+
+                desc = StreamData.VertexElementDesc.__new__(StreamData.VertexElementDesc)
+                desc.offset = int(attribute.get("offset", 0))
+                desc.storageType = storage_type
+                desc.count = int(attribute.get("elementCount", 0))
+                desc.elementType = element_type
+                element_info.append(desc)
+
+            stream.elementInfo = element_info
+            stream.elementInfoCount = len(element_info)
+            stream.streamAbsOffset = int(stream_payload.get("offset", 0))
+            stream.streamLength = int(stream_payload.get("length", stream.stride * self.vertexCount))
+
+            resolved_streams.append((stream, {desc.elementType for desc in element_info}))
+
+        for stream, semantics in resolved_streams:
+            if StreamData.VertexElementDesc.ElementType.Pos in semantics:
+                self.vertexStream = stream
+            elif semantics & {
+                StreamData.VertexElementDesc.ElementType.Normal,
+                StreamData.VertexElementDesc.ElementType.Tangent,
+                StreamData.VertexElementDesc.ElementType.TangentBFlip,
+                StreamData.VertexElementDesc.ElementType.Binormal,
+            }:
+                self.normalsStream = stream
+            else:
+                self.uvStream = stream
+
 class IndexArrayResource(DataBlock):
     def __init__(self,f,expectedGuid):
         super().__init__(f,BlockIDs["IndexArrayResource"],expectedGuid)
@@ -3441,9 +3551,11 @@ def ReadCoreFile():
     r = ByteReader
     HZDEditor = bpy.context.scene.HZDEditor
     global asset
+    global CURRENT_CORE_PATH
     asset = Asset()
 
     core = Path(HZDEditor.HZDAbsPath)
+    CURRENT_CORE_PATH = core
     coresize = os.path.getsize(core)
     with open(core, "rb") as f:
         while f.tell() < coresize:
