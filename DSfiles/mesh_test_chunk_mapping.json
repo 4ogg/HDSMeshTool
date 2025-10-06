@@ -1,0 +1,88 @@
+{
+  "mesh": "mesh_test",
+  "stream_file": "mesh_test.stream",
+  "stream_size": 854272,
+  "chunks": [
+    {
+      "index": 0,
+      "primitive": 0,
+      "offset": 0,
+      "length": 113764,
+      "padding_after": 156,
+      "candidate_strides": {"28": 4063},
+      "possible_roles": ["positions", "normals/tangents"],
+      "notes": "size divisible by 28 bytes; yields 4063 vertices" 
+    },
+    {
+      "index": 1,
+      "primitive": 0,
+      "offset": 113920,
+      "length": 113764,
+      "padding_after": 156,
+      "candidate_strides": {"28": 4063},
+      "possible_roles": ["positions", "normals/tangents"],
+      "notes": "size divisible by 28 bytes; yields 4063 vertices" 
+    },
+    {
+      "index": 2,
+      "primitive": 0,
+      "offset": 227840,
+      "length": 32504,
+      "padding_after": 8,
+      "candidate_strides": {"8": 4063},
+      "possible_roles": ["colour/UV"],
+      "notes": "size divisible by 8 bytes; yields 4063 vertices" 
+    },
+    {
+      "index": 3,
+      "primitive": 1,
+      "offset": 260352,
+      "length": 42828,
+      "padding_after": 180,
+      "candidate_strides": {"12": 3569},
+      "possible_roles": ["unknown","tangent/NTB"],
+      "notes": "size divisible by 12 bytes; yields 3569 vertices; not divisible by 28 or 8" 
+    },
+    {
+      "index": 4,
+      "primitive": 1,
+      "offset": 303360,
+      "length": 206248,
+      "padding_after": 88,
+      "candidate_strides": {"28": 7366, "8": 25781},
+      "possible_roles": ["positions", "normals/tangents", "colour/UV"],
+      "notes": "size divisible by both 28 and 8; actual role depends on stride (28 bytes -> 7366 vertices; 8 bytes -> 25781 vertices)" 
+    },
+    {
+      "index": 5,
+      "primitive": 1,
+      "offset": 509696,
+      "length": 206248,
+      "padding_after": 88,
+      "candidate_strides": {"28": 7366, "8": 25781},
+      "possible_roles": ["positions", "normals/tangents", "colour/UV"],
+      "notes": "size divisible by both 28 and 8; actual role depends on stride (28 bytes -> 7366 vertices; 8 bytes -> 25781 vertices)" 
+    },
+    {
+      "index": 6,
+      "primitive": 1,
+      "offset": 716032,
+      "length": 58928,
+      "padding_after": 208,
+      "candidate_strides": {"16": 3683, "8": 7366},
+      "possible_roles": ["colour/UV", "tangent/NTB"],
+      "notes": "size divisible by 16 and 8; yields either 3683 or 7366 vertices" 
+    },
+    {
+      "index": 7,
+      "primitive": 1,
+      "offset": 775168,
+      "length": 78984,
+      "padding_after": 120,
+      "candidate_strides": {"24": 3291, "12": 6582, "8": 9873},
+      "possible_roles": ["colour/UV", "tangent/NTB"],
+      "notes": "size divisible by 24, 12 and 8; yields 3291, 6582 or 9873 vertices depending on actual stride" 
+    }
+  ],
+  "notes": "This table is derived from buffer view offsets in mesh_test.dmf. Actual roles and strides are inferred by comparing segment sizes to typical Decima stride lengths; they should be confirmed against the vertex stream set metadata in the .core file."
+}

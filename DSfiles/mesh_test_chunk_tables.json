@@ -1,0 +1,170 @@
+{
+  "71d9d23d-5e9f-b930-ab89-ef0525098768": {
+    "positions": {
+      "chunk_table_guid": "73aef770-8cd9-b334-872e-31ae6c455938",
+      "stride": 28,
+      "total_vertex_count": 4063,
+      "chunks": [
+        {
+          "primitive_id": 0,
+          "offset": 0,
+          "length": 113764,
+          "vertex_count": 4063,
+          "padding": 0
+        }
+      ]
+    },
+    "normals": {
+      "chunk_table_guid": "73aef770-8cd9-b334-872e-31ae6c455938",
+      "stride": 28,
+      "total_vertex_count": 4063,
+      "chunks": [
+        {
+          "primitive_id": 0,
+          "offset": 113920,
+          "length": 113764,
+          "vertex_count": 4063,
+          "padding": 156
+        }
+      ]
+    },
+    "colour_uv": {
+      "chunk_table_guid": "73aef770-8cd9-b334-872e-31ae6c455938",
+      "stride": 8,
+      "total_vertex_count": 4063,
+      "chunks": [
+        {
+          "primitive_id": 0,
+          "offset": 227840,
+          "length": 32504,
+          "vertex_count": 4063,
+          "padding": 156
+        }
+      ]
+    }
+  },
+  "2c4982a5-e2cc-853b-9139-f09f0d1975de": {
+    "positions": {
+      "chunk_table_guid": "c0d13d1e-f89f-a33f-88f7-842e669c5be3",
+      "stride": 28,
+      "total_vertex_count": 7366,
+      "chunks": [
+        {
+          "primitive_id": 1,
+          "offset": 303360,
+          "length": 206248,
+          "vertex_count": 7366,
+          "padding": 0
+        }
+      ]
+    },
+    "normals": {
+      "chunk_table_guid": "c0d13d1e-f89f-a33f-88f7-842e669c5be3",
+      "stride": 28,
+      "total_vertex_count": 7366,
+      "chunks": [
+        {
+          "primitive_id": 1,
+          "offset": 509696,
+          "length": 206248,
+          "vertex_count": 7366,
+          "padding": 88
+        }
+      ]
+    },
+    "colour_uv": {
+      "chunk_table_guid": "c0d13d1e-f89f-a33f-88f7-842e669c5be3",
+      "stride": 8,
+      "total_vertex_count": 7366,
+      "chunks": [
+        {
+          "primitive_id": 1,
+          "offset": 716032,
+          "length": 58928,
+          "vertex_count": 7366,
+          "padding": 88
+        }
+      ]
+    }
+  },
+  "4d259e32-f0ce-a13d-9bc6-c5b9e32237ea": {
+    "positions": {
+      "chunk_table_guid": "550ecb89-0945-d730-a1d7-668968f44b62",
+      "stride": 28,
+      "total_vertex_count": 2331,
+      "chunks": []
+    },
+    "normals": {
+      "chunk_table_guid": "550ecb89-0945-d730-a1d7-668968f44b62",
+      "stride": 28,
+      "total_vertex_count": 2331,
+      "chunks": []
+    },
+    "colour_uv": {
+      "chunk_table_guid": "550ecb89-0945-d730-a1d7-668968f44b62",
+      "stride": 8,
+      "total_vertex_count": 2331,
+      "chunks": []
+    }
+  },
+  "c7f32a67-a339-5139-80c2-17e342f6eb55": {
+    "positions": {
+      "chunk_table_guid": "bba21687-2f53-c432-84f0-ece850642f48",
+      "stride": 28,
+      "total_vertex_count": 3155,
+      "chunks": []
+    },
+    "normals": {
+      "chunk_table_guid": "bba21687-2f53-c432-84f0-ece850642f48",
+      "stride": 28,
+      "total_vertex_count": 3155,
+      "chunks": []
+    },
+    "colour_uv": {
+      "chunk_table_guid": "bba21687-2f53-c432-84f0-ece850642f48",
+      "stride": 8,
+      "total_vertex_count": 3155,
+      "chunks": []
+    }
+  },
+  "d744ed9b-a1b0-fd31-9b66-b81406c885a0": {
+    "positions": {
+      "chunk_table_guid": "a8233f6d-d4fe-da3b-9aba-c91a82c7c07b",
+      "stride": 28,
+      "total_vertex_count": 1285,
+      "chunks": []
+    },
+    "normals": {
+      "chunk_table_guid": "a8233f6d-d4fe-da3b-9aba-c91a82c7c07b",
+      "stride": 28,
+      "total_vertex_count": 1285,
+      "chunks": []
+    },
+    "colour_uv": {
+      "chunk_table_guid": "a8233f6d-d4fe-da3b-9aba-c91a82c7c07b",
+      "stride": 8,
+      "total_vertex_count": 1285,
+      "chunks": []
+    }
+  },
+  "2acf9e83-ace6-2a36-bbf4-c952328850fc": {
+    "positions": {
+      "chunk_table_guid": "463d7939-3c59-dc3b-af6c-c6c9ebe8b161",
+      "stride": 28,
+      "total_vertex_count": 1609,
+      "chunks": []
+    },
+    "normals": {
+      "chunk_table_guid": "463d7939-3c59-dc3b-af6c-c6c9ebe8b161",
+      "stride": 28,
+      "total_vertex_count": 1609,
+      "chunks": []
+    },
+    "colour_uv": {
+      "chunk_table_guid": "463d7939-3c59-dc3b-af6c-c6c9ebe8b161",
+      "stride": 8,
+      "total_vertex_count": 1609,
+      "chunks": []
+    }
+  }
+}
